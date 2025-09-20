@@ -1,0 +1,127 @@
+const userModel = require("../models/user/user.model");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+const register = async (req, res) => {
+  try {
+    const {
+      fullName: { firstName, lastName },
+      userName,
+      email,
+      password,
+    } = req.body;
+
+    const userExists = await userModel.findOne({
+      $or: [{ email }, { userName }],
+    });
+
+    if (userExists) {
+      return res.status(409).json({
+        message: "User with given email or username already exists",
+      });
+    }
+
+    const newUser = await userModel.create({
+      fullName: {
+        firstName,
+        lastName,
+      },
+      userName,
+      email,
+      password: await bcrypt.hash(password, 10), // hashing password before saving
+    });
+
+    const token = jwt.sign(
+      {
+        id: newUser._id,
+        email: newUser.email,
+        userName: newUser.userName,
+      },
+      process.env.JWT_SECRET,
+      {
+        // process.env.JWT_SECRET is a secret key used to sign the token. It should be a long, random string that is kept secret.
+        expiresIn: "1d", // token will expire in 1 day
+      }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user: {
+        id: newUser._id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        userName: newUser.userName,
+        role: newUser.role,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+const login = async (req, res) => {
+  try {
+    const { email, userName, password } = req.body;
+
+    const userExists = await userModel
+      .findOne({
+        $or: [{ email }, { userName }],
+      })
+      .select("+password"); // explicitly select password field
+
+    if (!userExists) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, userExists.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: userExists._id, email: userExists.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User logged in successfully",
+      user: {
+        id: userExists._id,
+        fullName: userExists.fullName,
+        email: userExists.email,
+        userName: userExists.userName,
+        role: userExists.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+};
