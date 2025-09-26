@@ -2,6 +2,9 @@ require('dotenv').config({path : "../../.env"})
 if (!process.env.JWT_SECRET) {
   process.env.JWT_SECRET = 'test_jwt_secret_key';
 }
+// Ensure any Redis usage during tests does not touch production by mocking ioredis
+// Jest will automatically use src/__mocks__/ioredis.js
+jest.mock('ioredis');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 

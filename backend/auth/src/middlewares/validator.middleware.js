@@ -90,7 +90,47 @@ const loginUserValidator = [
   respondValidationErrors,
 ]
 
+const addressValidator = [
+  body("street")
+  .isString()
+  .withMessage("Street must be a string")
+  .notEmpty()
+  .withMessage("Street is required"),
+
+  body("city")
+  .isString()
+  .withMessage("City must be a string")
+  .notEmpty()
+  .withMessage("City is required"),
+
+  body("state")
+  .isString()
+  .withMessage("State must be a string")
+  .notEmpty()
+  .withMessage("State is required"),
+
+  body("country")
+  .isString()
+  .withMessage("Country must be a string")
+  .notEmpty()
+  .withMessage("Country is required"),
+
+  body("zipCode")
+  .isString()
+  .withMessage("Zip code must be a string")
+  .notEmpty()
+  .withMessage("Zip code is required"),
+  
+  body("isDefault")
+  .optional()
+  .isBoolean()
+  .withMessage("isDefault must be a boolean"),
+
+  respondValidationErrors,
+]
+
 module.exports = {
   registerUserValidator,
   loginUserValidator,
+  addressValidator,
 };

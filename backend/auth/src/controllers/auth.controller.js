@@ -1,7 +1,7 @@
 const userModel = require("../models/user/user.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
+const redis = require("../db/redis");
 
 // Controller for registering a new user
 const register = async (req, res) => {
@@ -38,7 +38,6 @@ const register = async (req, res) => {
         id: newUser._id,
         email: newUser.email,
         userName: newUser.userName,
-        role: newUser.role,
       },
       process.env.JWT_SECRET,
       {
@@ -71,7 +70,6 @@ const register = async (req, res) => {
   }
 };
 
-
 // Controller for getting current logged in user
 const login = async (req, res) => {
   try {
@@ -98,7 +96,11 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: userExists._id, email: userExists.email, userName: userExists.userName, role: userExists.role },
+      {
+        id: userExists._id,
+        email: userExists.email,
+        userName: userExists.userName,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -126,19 +128,34 @@ const login = async (req, res) => {
   }
 };
 
-
 //controller for getting current logged in user
-const currentUser = async(req,res)=>{
-
+const currentUser = async (req, res) => {
   const user = req.user;
   res.status(200).json({
     success: true,
-    user
+    user,
   });
-}
+};
+
+// Controller for logging out a user
+const logout = async (req, res) => {
+  const { token } = req.cookies;
+  if (token) {
+    await redis.set(`blcklist:${token}`, "true", "EX", 24 * 60 * 60); // expire in 1 day
+  }
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true,
+  });
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+};
 
 module.exports = {
   register,
   login,
   currentUser,
+  logout,
 };
