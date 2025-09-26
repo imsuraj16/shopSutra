@@ -1,5 +1,6 @@
 const userModel = require("../models/user/user.model");
 
+// Get all addresses for the authenticated user
 const getAddresses = async (req, res) => {
   try {
     const { id } = req.user; // from auth middleware
@@ -14,6 +15,7 @@ const getAddresses = async (req, res) => {
   }
 };
 
+// Add a new address for the authenticated user
 const addAddress = async (req, res) => {
   const { street, city, state, country, zipCode, isDefault } = req.body;
 
@@ -36,8 +38,41 @@ const addAddress = async (req, res) => {
   return res.status(201).json({
     success: true,
     message: "Address added successfully",
-    address: user.address[user.address.length - 1], //user ke latest added address ko bhejte hain.
+    address: user.address[user.address.length - 1],
+    addresses: user.address, //user ke latest added address ko bhejte hain.
   });
 };
 
-module.exports = { getAddresses, addAddress };
+const deleteaddress = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { addressId } = req.params;
+
+    const user = await userModel.findOneAndUpdate(
+      {
+        _id: id,
+        "address._id": addressId,
+      },
+      {
+        $pull: { address: { _id: addressId } },
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "address not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Address deleted successfully",
+      addresses: user.address,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+module.exports = { getAddresses, addAddress, deleteaddress };

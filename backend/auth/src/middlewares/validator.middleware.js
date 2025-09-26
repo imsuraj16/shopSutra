@@ -3,14 +3,14 @@
 // body: a function that targets a specific field in the request body (req.body) and lets you chain validation methods.
 // validationResult: a function that collects and returns all validation errors found by the validator middlewares.
 
-const { body, validationResult } = require("express-validator");
+const { body, param, validationResult } = require("express-validator");
 
 const respondValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
-// validationResult(req) checks the request for any errors that previous validation middlewares (like the ones you’ll define below) might have produced.
+  // validationResult(req) checks the request for any errors that previous validation middlewares (like the ones you’ll define below) might have produced.
 
   if (!errors.isEmpty()) {
-      //   !errors.isEmpty() means: if there are errors, run the block inside.
+    //   !errors.isEmpty() means: if there are errors, run the block inside.
     //errors.isEmpty() returns true if there are no validation errors.
 
     return res.status(400).json({
@@ -62,7 +62,6 @@ const registerUserValidator = [
   respondValidationErrors,
 ];
 
-
 const loginUserValidator = [
   body("email")
     .optional()
@@ -78,59 +77,71 @@ const loginUserValidator = [
     .withMessage("Password must be a string")
     .notEmpty()
     .withMessage("Password is required"),
-    (req, res, next) => {
-      if (!req.body.email && !req.body.userName) {
-        return res.status(400).json({
-          errors: [{ msg: "Either email or username is required", param: "email/userName", location: "body" }],
-        });
-      }
-      next();
-    },
+  (req, res, next) => {
+    if (!req.body.email && !req.body.userName) {
+      return res.status(400).json({
+        errors: [
+          {
+            msg: "Either email or username is required",
+            param: "email/userName",
+            location: "body",
+          },
+        ],
+      });
+    }
+    next();
+  },
 
   respondValidationErrors,
-]
+];
 
 const addressValidator = [
   body("street")
-  .isString()
-  .withMessage("Street must be a string")
-  .notEmpty()
-  .withMessage("Street is required"),
+    .isString()
+    .withMessage("Street must be a string")
+    .notEmpty()
+    .withMessage("Street is required"),
 
   body("city")
-  .isString()
-  .withMessage("City must be a string")
-  .notEmpty()
-  .withMessage("City is required"),
+    .isString()
+    .withMessage("City must be a string")
+    .notEmpty()
+    .withMessage("City is required"),
 
   body("state")
-  .isString()
-  .withMessage("State must be a string")
-  .notEmpty()
-  .withMessage("State is required"),
+    .isString()
+    .withMessage("State must be a string")
+    .notEmpty()
+    .withMessage("State is required"),
 
   body("country")
-  .isString()
-  .withMessage("Country must be a string")
-  .notEmpty()
-  .withMessage("Country is required"),
+    .isString()
+    .withMessage("Country must be a string")
+    .notEmpty()
+    .withMessage("Country is required"),
 
   body("zipCode")
-  .isString()
-  .withMessage("Zip code must be a string")
-  .notEmpty()
-  .withMessage("Zip code is required"),
-  
+    .isString()
+    .withMessage("Zip code must be a string")
+    .notEmpty()
+    .withMessage("Zip code is required"),
+
   body("isDefault")
-  .optional()
-  .isBoolean()
-  .withMessage("isDefault must be a boolean"),
+    .optional()
+    .isBoolean()
+    .withMessage("isDefault must be a boolean"),
 
   respondValidationErrors,
-]
+];
+
+const addressIdParamValidator = [
+  param("addressId").isMongoId().withMessage("Invalid address id"),
+  respondValidationErrors,
+];
 
 module.exports = {
   registerUserValidator,
   loginUserValidator,
   addressValidator,
+  addressIdParamValidator,
 };

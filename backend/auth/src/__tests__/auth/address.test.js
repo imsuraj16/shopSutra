@@ -126,7 +126,7 @@ describe('User Addresses (contract)', () => {
     });
   });
 
-  describe('DELETE /api/auth/users/me/addresses/:addressId', () => {
+  describe('DELETE /api/auth/users/me/address/:addressId', () => {
     test('deletes an existing address', async () => {
       const { cookie } = await createAndLoginUser();
       const { res: addRes } = await addAddress(cookie);
@@ -135,17 +135,17 @@ describe('User Addresses (contract)', () => {
         expect(addRes.status).toBe(404);
         return;
       }
-      const addresses = addRes.body.addresses || (addRes.body.user && addRes.body.user.address) || [];
+      const addresses = addRes.body.addresses || (addRes.body.user && addRes.body.user.addresses) || [];
       const addr = addresses[0];
       expect(addr).toBeDefined();
       const id = addr._id || addr.id;
       expect(id).toBeDefined();
       const delRes = await request(app)
-        .delete(`/api/auth/users/me/addresses/${id}`)
+        .delete(`/api/auth/users/me/address/${id}`)
         .set('Cookie', cookie);
       if (delRes.status === 404) {
         // 404 could mean unimplemented or not found - allow but document
-        console.warn('DELETE /api/auth/users/me/addresses/:id not implemented yet.');
+        console.warn('DELETE /api/auth/users/me/address/:id not implemented yet.');
         expect(delRes.status).toBe(404);
       } else {
         expect(delRes.status).toBe(200);
@@ -157,7 +157,7 @@ describe('User Addresses (contract)', () => {
       const { cookie } = await createAndLoginUser();
       const fakeId = '64b64b64b64b64b64b64b64b6'; // valid-ish ObjectId length
       const res = await request(app)
-        .delete(`/api/auth/users/me/addresses/${fakeId}`)
+        .delete(`/api/auth/users/me/address/${fakeId}`)
         .set('Cookie', cookie);
       if (res.status === 404) {
         // acceptable either as not implemented or not found
@@ -169,7 +169,7 @@ describe('User Addresses (contract)', () => {
 
     test('401 when unauthenticated', async () => {
       await request(app)
-        .delete('/api/auth/users/me/addresses/64b64b64b64b64b64b64b64b6')
+        .delete('/api/auth/users/me/address/64b64b64b64b64b64b64b64b6')
         .expect(401);
     });
   });
