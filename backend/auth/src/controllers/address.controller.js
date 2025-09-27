@@ -17,30 +17,34 @@ const getAddresses = async (req, res) => {
 
 // Add a new address for the authenticated user
 const addAddress = async (req, res) => {
-  const { street, city, state, country, zipCode, isDefault } = req.body;
+  try {
+    const { street, city, state, country, zipCode, isDefault } = req.body;
 
-  const id = req.user._id;
+    const id = req.user._id;
 
-  const user = await userModel.findOneAndUpdate(
-    { _id: id },
-    {
-      $push: {
-        address: { street, city, state, country, zipCode, isDefault },
+    const user = await userModel.findOneAndUpdate(
+      { _id: id },
+      {
+        $push: {
+          address: { street, city, state, country, zipCode, isDefault },
+        },
       },
-    },
-    { new: true }
-  ); //hume latest updated document chahiye.
+      { new: true }
+    ); //hume latest updated document chahiye.
 
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Address added successfully",
+      address: user.address[user.address.length - 1],
+      addresses: user.address, //user ke latest added address ko bhejte hain.
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  return res.status(201).json({
-    success: true,
-    message: "Address added successfully",
-    address: user.address[user.address.length - 1],
-    addresses: user.address, //user ke latest added address ko bhejte hain.
-  });
 };
 
 // Delete an address for the authenticated user
@@ -79,38 +83,42 @@ const deleteaddress = async (req, res) => {
 
 // Update an address for the authenticated user
 const updateAddress = async (req, res) => {
-  const { id } = req.user;
-  const { addressId } = req.params;
-  const { street, city, state, country, zipCode, isDefault } = req.body;
+  try {
+    const { id } = req.user;
+    const { addressId } = req.params;
+    const { street, city, state, country, zipCode, isDefault } = req.body;
 
-  const user = await userModel.findOneAndUpdate(
-    {
-      _id: id,
-      "address._id": addressId,
-    },
-    {
-      $set: {
-        "address.$.street": street,
-        "address.$.city": city,
-        "address.$.state": state,
-        "address.$.country": country,
-        "address.$.zipCode": zipCode,
-        "address.$.isDefault": isDefault,
+    const user = await userModel.findOneAndUpdate(
+      {
+        _id: id,
+        "address._id": addressId,
       },
-    },
-    {
-      new: true,
+      {
+        $set: {
+          "address.$.street": street,
+          "address.$.city": city,
+          "address.$.state": state,
+          "address.$.country": country,
+          "address.$.zipCode": zipCode,
+          "address.$.isDefault": isDefault,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "Address not found" });
     }
-  );
 
-  if (!user) {
-    return res.status(404).json({ message: "Address not found" });
+    return res.status(200).json({
+      success: true,
+      message: "Address updated successfully",
+      addresses: user.address,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  return res.status(200).json({
-    success: true,
-    message: "Address updated successfully",
-    addresses: user.address,
-  });
 };
 module.exports = { getAddresses, addAddress, deleteaddress, updateAddress };

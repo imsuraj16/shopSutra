@@ -11,6 +11,7 @@ const register = async (req, res) => {
       userName,
       email,
       password,
+      role
     } = req.body;
 
     const userExists = await userModel.findOne({
@@ -31,6 +32,7 @@ const register = async (req, res) => {
       userName,
       email,
       password: await bcrypt.hash(password, 10), // hashing password before saving
+      role : role || 'user'
     });
 
     const token = jwt.sign(
