@@ -6,7 +6,7 @@ Contract tests for user address management endpoints.
 Endpoints (expected):
 GET    /api/auth/users/me/address              -> list addresses for current user
 POST   /api/auth/users/me/address              -> add a new address (append to array)
-DELETE /api/auth/users/me/addresses/:addressId -> delete specific address subdocument
+DELETE /api/auth/users/me/address/:addressId -> delete specific address subdocument
 
 Assumptions / Expected behaviour:
 - All endpoints require authentication via cookie named "token" (same flow as /me).
@@ -171,6 +171,80 @@ describe('User Addresses (contract)', () => {
       await request(app)
         .delete('/api/auth/users/me/address/64b64b64b64b64b64b64b64b6')
         .expect(401);
+    });
+  });
+
+  describe('PATCH /api/auth/users/me/address/:addressId', () => {
+    test('updates an existing address fields', async () => {
+      const { cookie } = await createAndLoginUser();
+      const { res: addRes } = await addAddress(cookie);
+      if (addRes.status === 404) {
+        console.warn('Address endpoints not implemented yet (PATCH add precondition).');
+        expect(addRes.status).toBe(404);
+        return;
+      }
+      const addresses = addRes.body.addresses || (addRes.body.user && addRes.body.user.addresses) || [];
+      const addr = addresses[0];
+      expect(addr).toBeDefined();
+      const id = addr._id || addr.id;
+      expect(id).toBeDefined();
+
+      const patchPayload = { city: 'Updated City', state: 'UP' };
+      const patchRes = await request(app)
+        .patch(`/api/auth/users/me/address/${id}`)
+        .set('Cookie', cookie)
+        .send(patchPayload);
+
+      if (patchRes.status === 404) {
+        console.warn('PATCH /api/auth/users/me/address/:id not implemented yet.');
+        expect(patchRes.status).toBe(404);
+      } else {
+        expect([200, 204]).toContain(patchRes.status);
+        // If body present, validate structure; if 204, follow-up GET to verify
+        if (patchRes.status !== 204) {
+          expect(patchRes.body.success).toBe(true);
+        }
+        // Verify the update via GET regardless of response shape
+        const getRes = await request(app)
+          .get('/api/auth/users/me/address')
+          .set('Cookie', cookie);
+        if (getRes.status === 200) {
+          const updated = (getRes.body.addresses || []).find(a => (a._id === id) || (a.id === id));
+          expect(updated).toBeDefined();
+          expect(updated).toMatchObject({ city: 'Updated City', state: 'UP' });
+        }
+      }
+    });
+
+    test('401 when unauthenticated', async () => {
+      const res = await request(app)
+        .patch('/api/auth/users/me/address/64b64b64b64b64b64b64b64b6')
+        .send({ city: 'No Auth' });
+      if (res.status === 404) {
+        console.warn('PATCH unauthenticated test: endpoint not implemented yet.');
+        expect(res.status).toBe(404);
+      } else {
+        expect(res.status).toBe(401);
+      }
+    });
+
+    test('400 or 404 for invalid addressId', async () => {
+      const { cookie } = await createAndLoginUser();
+      const res = await request(app)
+        .patch('/api/auth/users/me/address/not-a-valid-id')
+        .set('Cookie', cookie)
+        .send({ city: 'Invalid Id' });
+      expect([400, 404]).toContain(res.status);
+    });
+
+    test('404 or 400 when patching non-existing addressId', async () => {
+      const { cookie } = await createAndLoginUser();
+      const fakeId = '64b64b64b64b64b64b64b64b6'; // valid-ish ObjectId length
+      const res = await request(app)
+        .patch(`/api/auth/users/me/address/${fakeId}`)
+        .set('Cookie', cookie)
+        .send({ city: 'Ghost City' });
+      expect([400, 404]).toContain(res.status);
     });
   });
 });

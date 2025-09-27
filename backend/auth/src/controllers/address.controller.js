@@ -43,6 +43,7 @@ const addAddress = async (req, res) => {
   });
 };
 
+// Delete an address for the authenticated user
 const deleteaddress = async (req, res) => {
   try {
     const { id } = req.user;
@@ -75,4 +76,41 @@ const deleteaddress = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-module.exports = { getAddresses, addAddress, deleteaddress };
+
+// Update an address for the authenticated user
+const updateAddress = async (req, res) => {
+  const { id } = req.user;
+  const { addressId } = req.params;
+  const { street, city, state, country, zipCode, isDefault } = req.body;
+
+  const user = await userModel.findOneAndUpdate(
+    {
+      _id: id,
+      "address._id": addressId,
+    },
+    {
+      $set: {
+        "address.$.street": street,
+        "address.$.city": city,
+        "address.$.state": state,
+        "address.$.country": country,
+        "address.$.zipCode": zipCode,
+        "address.$.isDefault": isDefault,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!user) {
+    return res.status(404).json({ message: "Address not found" });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Address updated successfully",
+    addresses: user.address,
+  });
+};
+module.exports = { getAddresses, addAddress, deleteaddress, updateAddress };
