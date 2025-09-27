@@ -62,3 +62,32 @@ describe('/api/auth/me (contract)', () => {
       .expect(401);
   });
 });
+
+describe('PATCH /api/auth/me', () => {
+  test('updates current user basic fields', async () => {
+    const { cookie } = await createAndLoginUser({ fullName: { firstName: 'Old', lastName: 'Name' } });
+    const patchBody = { fullName: { firstName: 'Updated' } };
+
+    const patchRes = await request(app)
+      .patch('/api/auth/me')
+      .set('Cookie', cookie)
+      .send(patchBody);
+
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.success).toBe(true);
+
+    // Verify via GET /me
+    const getRes = await request(app).get('/api/auth/me').set('Cookie', cookie).expect(200);
+    expect(getRes.body.user.fullName.firstName).toBe('Updated');
+  });
+
+  test('401 when unauthenticated', async () => {
+    const res = await request(app)
+      .patch('/api/auth/me')
+      .send({ fullName: { firstName: 'Nope' } });
+
+    expect(res.status).toBe(401);
+  });
+});
+
+

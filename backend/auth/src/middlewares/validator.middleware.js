@@ -21,6 +21,8 @@ const respondValidationErrors = (req, res, next) => {
 };
 
 const registerUserValidator = [
+  body("fullName").exists().withMessage("Full name is required"),
+
   body("fullName.firstName")
     .isString()
     .withMessage("First name must be a string")
@@ -95,6 +97,39 @@ const loginUserValidator = [
   respondValidationErrors,
 ];
 
+const updateUserValidator = [
+  body("fullName").exists().withMessage("Full name is required"),
+
+  body("fullName.firstName")
+    .isString()
+    .withMessage("First name must be a string")
+    .optional({ nullable: true })
+    .isLength({ min: 2 })
+    .withMessage("First name must be at least 2 characters long"),
+
+  body("fullName.lastName")
+    .isString()
+    .withMessage("Last name must be a string")
+    .optional({ nullable: true })
+    .isLength({ min: 2 })
+    .withMessage("Last name must be at least 2 characters long"),
+
+  body("userName")
+    .isString()
+    .withMessage("Username must be a string")
+    .optional({ nullable: true })
+    .isLength({ min: 4 })
+    .withMessage("Username must be at least 4 characters long"),
+
+  body("email")
+    .isEmail()
+    .withMessage("email must be a valid email address")
+    .normalizeEmail()
+   .optional({ nullable: true }),
+
+  respondValidationErrors,
+];
+
 const addressValidator = [
   body("street")
     .isString()
@@ -142,6 +177,7 @@ const addressIdParamValidator = [
 module.exports = {
   registerUserValidator,
   loginUserValidator,
+  updateUserValidator,
   addressValidator,
   addressIdParamValidator,
 };

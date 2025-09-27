@@ -1,6 +1,6 @@
 const express = require('express');
-const { register, login, currentUser, logout } = require('../controllers/auth.controller');
-const { registerUserValidator, loginUserValidator } = require('../middlewares/validator.middleware');
+const { register, login, currentUser, logout, updateUser } = require('../controllers/auth.controller');
+const { registerUserValidator, loginUserValidator, updateUserValidator } = require('../middlewares/validator.middleware');
 const authMiddleware = require('../middlewares/auth.middleware');
 
 const router = express.Router();
@@ -17,6 +17,9 @@ router.get('/me', authMiddleware,currentUser);
 // POST /api/auth/logout
 // Logout should be idempotent and not require auth; it just clears the cookie
 router.post('/logout', logout);
+
+//PATCH /api/auth/me
+router.patch('/me',authMiddleware,updateUserValidator,updateUser);
 
 
 

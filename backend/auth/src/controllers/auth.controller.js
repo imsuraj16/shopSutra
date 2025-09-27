@@ -11,7 +11,7 @@ const register = async (req, res) => {
       userName,
       email,
       password,
-      role
+      role,
     } = req.body;
 
     const userExists = await userModel.findOne({
@@ -32,7 +32,7 @@ const register = async (req, res) => {
       userName,
       email,
       password: await bcrypt.hash(password, 10), // hashing password before saving
-      role : role || 'user'
+      role: role || "user",
     });
 
     const token = jwt.sign(
@@ -155,9 +155,57 @@ const logout = async (req, res) => {
   });
 };
 
+//controller for updating user details
+const updateUser = async (req, res) => {
+  const { id } = req.user;
+
+  const {
+    fullName: { firstName, lastName },
+    userName,
+    email,
+    role,
+  } = req.body;
+
+  const user = await userModel.findOneAndUpdate(
+    {
+      _id: id,
+    },
+    {
+      $set: {
+        "fullName.firstName": firstName,
+        "fullName.lastName": lastName,
+        "email": email,
+        "userName": userName,
+        "role": role,
+      },
+    },
+    {
+      new :true,
+    }
+  );
+
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+    });
+  }
+  return res.status(200).json({
+    success: true,
+    message: "User updated successfully",
+    user:{
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      userName: user.userName,
+      role: user.role,
+    }
+  });
+};
+
 module.exports = {
   register,
   login,
   currentUser,
   logout,
+  updateUser,
 };
