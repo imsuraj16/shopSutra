@@ -40,6 +40,7 @@ const register = async (req, res) => {
         id: newUser._id,
         email: newUser.email,
         userName: newUser.userName,
+        role: newUser.role,
       },
       process.env.JWT_SECRET,
       {
@@ -102,6 +103,7 @@ const login = async (req, res) => {
         id: userExists._id,
         email: userExists.email,
         userName: userExists.userName,
+        role: userExists.role,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
