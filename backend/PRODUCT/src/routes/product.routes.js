@@ -1,8 +1,8 @@
 const express = require("express");
 const multer = require("multer");
-const { createProduct, getProducts } = require("../controllers/product.controller");
+const { createProduct, getProducts, getProductById } = require("../controllers/product.controller");
 const createAuthMiddleware = require("../middlewares/auth.middleware");
-const { productValidation } = require("../middlewares/validator.middleware");
+const { productValidation, paramsValidation } = require("../middlewares/validator.middleware");
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -40,5 +40,7 @@ router.post(
 );
 
 router.get('/', getProducts);
+
+router.get('/:productId', paramsValidation, createAuthMiddleware(["seller"]), getProductById);
 
 module.exports = router;

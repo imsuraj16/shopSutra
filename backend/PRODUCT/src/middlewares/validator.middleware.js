@@ -1,4 +1,4 @@
-const { body, validationResult } = require("express-validator");
+const { body, validationResult,param } = require("express-validator");
 const sanitizehtml = require("sanitize-html");
 
 const errorResponse = (req, res, next) => {
@@ -34,7 +34,7 @@ const productValidation = [
       })
     ),
 
-    body("price['amount']")
+  body("price['amount']")
     .notEmpty()
     .withMessage("Price amount is required")
     .isNumeric()
@@ -54,5 +54,51 @@ const productValidation = [
   errorResponse,
 ];
 
+const updateProductvalidation = [
+  body("title")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("Title cannot be empty")
+    .customSanitizer((value) =>
+      sanitizehtml(value, { allowedTags: [], allowedAttributes: {} })
+    ),
 
-module.exports = { productValidation };
+  body("description")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("Description cannot be empty")
+    .customSanitizer((value) =>
+      sanitizehtml(value, { allowedTags: [], allowedAttributes: {} })
+    ),
+
+  body("price['amount']")
+    .optional()
+    .notEmpty()
+    .withMessage("Price amount cannot be empty")
+    .isNumeric()
+    .withMessage("Price amount must be a number")
+    .custom((value) => {
+      if (value <= 0) {
+        throw new Error("Price amount must be greater than zero");
+      }
+      return true;
+    }),
+
+  body("price['currency']")
+    .optional()
+    .isIn(["INR", "USD"])
+    .withMessage("Currency must be one of INR, USD"),
+
+  errorResponse,
+];
+
+const paramsValidation = [
+ param("productId")
+    .isMongoId()
+    .withMessage("Invalid product ID"),
+  errorResponse,
+];
+
+module.exports = { productValidation, updateProductvalidation, paramsValidation };

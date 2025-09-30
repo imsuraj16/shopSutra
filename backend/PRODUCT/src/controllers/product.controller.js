@@ -42,7 +42,15 @@ const createProduct = async (req, res) => {
 
 //getting all products
 const getProducts = async (req, res) => {
-  const { q, minPrice, maxPrice, page = 1, limit = 10, order = "asc", sortBy = "createdAt" } = req.query;
+  const {
+    q,
+    minPrice,
+    maxPrice,
+    page = 1,
+    limit = 10,
+    order = "asc",
+    sortBy = "createdAt",
+  } = req.query;
 
   const filter = {};
 
@@ -56,7 +64,7 @@ const getProducts = async (req, res) => {
       ...(maxPrice ? { $lte: Number(maxPrice) } : {}),
     };
   }
-  const skip = (Number(page - 1)) * Number(limit);
+  const skip = Number(page - 1) * Number(limit);
   const sortOrder = order === "dsc" ? -1 : 1;
 
   const products = await productModel
@@ -79,7 +87,39 @@ const getProducts = async (req, res) => {
   });
 };
 
+//getting product by id
+const getProductById = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    // Validate ObjectId format explicitly to return 400 for invalid ids
+    const isValidObjectId = /^[a-fA-F0-9]{24}$/.test(productId);
+    if (!isValidObjectId) {
+      return res.status(400).json({ success: false, message: "Invalid product ID" });
+    }
+
+    const product = await productModel.findById(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   createProduct,
   getProducts,
+  getProductById,
 };
