@@ -15,7 +15,7 @@ function createAuthMiddleware(roles = ["user"]) {
         if (!roles.includes(decoded.role)) {
           return res.status(403).json({ message: "Access denied" });
         }
-        req.user = decoded;        
+        req.user = decoded;
         next();
       } catch (error) {
         return res.status(401).json({ message: "Invalid token" });

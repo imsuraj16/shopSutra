@@ -34,7 +34,8 @@ const productValidation = [
       })
     ),
 
-  body("price['amount']")
+  // Validate normalized nested price fields (set by normalizeProductBody)
+  body("price.amount")
     .notEmpty()
     .withMessage("Price amount is required")
     .isNumeric()
@@ -46,7 +47,7 @@ const productValidation = [
       return true;
     }),
 
-  body("price['currency']")
+  body("price.currency")
     .optional()
     .isIn(["INR", "USD"])
     .withMessage("Currency must be one of INR, USD"),
@@ -73,7 +74,16 @@ const updateProductvalidation = [
       sanitizehtml(value, { allowedTags: [], allowedAttributes: {} })
     ),
 
-  body("price['amount']")
+    body('price')
+    .optional()
+    .custom((value)=>{
+      if(typeof value !== 'object' || Array.isArray(value) || value === null){
+        throw new Error("Price must be an object with amount and currency fields");
+      }
+      return true;
+    }),
+
+  body("price.amount")
     .optional()
     .notEmpty()
     .withMessage("Price amount cannot be empty")
@@ -86,7 +96,7 @@ const updateProductvalidation = [
       return true;
     }),
 
-  body("price['currency']")
+  body("price.currency")
     .optional()
     .isIn(["INR", "USD"])
     .withMessage("Currency must be one of INR, USD"),
