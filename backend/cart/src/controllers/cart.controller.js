@@ -1,6 +1,7 @@
 const cartModel = require("../models/cart.model");
 const axios = require("axios");
 
+// Add item to cart
 const addItemToCart = async (req, res) => {
   try {
     const { items } = req.body;
@@ -34,7 +35,7 @@ const addItemToCart = async (req, res) => {
     });
 
     cart.items = Array.from(itemMap, ([productId, quantity]) => ({
-      productId : productId,
+      productId: productId,
       quantity,
     }));
 
@@ -68,6 +69,39 @@ const addItemToCart = async (req, res) => {
   }
 };
 
+//get all items in cart
+const allItemsInCart = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const cart = await cartModel.findOne({ user: userId });
+
+    if (!cart) {
+      return res.status(200).json({
+        success: true,
+        message: "Cart is empty",
+        data: { items: [], totalPrice: 0 },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Cart retrieved",
+      data: cart,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addItemToCart,
+  allItemsInCart,
 };
