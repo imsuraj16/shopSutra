@@ -67,7 +67,6 @@ router.get("/", getProducts);
 router.get(
   "/:productId",
   paramsValidation,
-  createAuthMiddleware(["seller"]),
   getProductById
 );
 
